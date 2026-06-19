@@ -3,14 +3,15 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Fix MPM conflict — remove all mpm configs and force prefork
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-           /etc/apache2/mods-enabled/mpm_event.load \
-           /etc/apache2/mods-enabled/mpm_worker.conf \
-           /etc/apache2/mods-enabled/mpm_worker.load \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
+# AGGRESSIVE FIX: Completely disable all MPM modules except prefork
+RUN set -ex && \
+    # Remove all MPM module symlinks from mods-enabled
+    find /etc/apache2/mods-enabled -name 'mpm_*' -delete && \
+    # Explicitly enable only mpm_prefork
+    ln -s /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load && \
+    ln -s /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    # Enable rewrite
+    a2enmod rewrite
 
 # Point document root at /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
