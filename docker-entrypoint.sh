@@ -22,5 +22,8 @@ echo "==> Running database setup..."
 php /var/www/html/database/setup.php
 echo "==> Database setup complete."
 
-echo "==> Starting Apache..."
-exec apache2-foreground
+echo "==> Starting PHP-FPM..."
+php-fpm -D
+
+echo "==> Starting Nginx..."
+exec nginx -g "daemon off;"

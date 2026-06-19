@@ -1,21 +1,20 @@
-FROM php:8.2-apache
+FROM php:8.2-fpm
 
-ARG CACHEBUST=1
+RUN docker-php-ext-install pdo pdo_mysql \
+    && apt-get update && apt-get install -y nginx \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN docker-php-ext-install pdo pdo_mysql
-
-RUN find /etc/apache2/mods-enabled -name 'mpm_*' -delete \
-    && ln -s /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -s /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && a2enmod rewrite
-
-ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
-
-RUN sed -ri 's|/var/www/html|${APACHE_DOCUMENT_ROOT}|g' \
-        /etc/apache2/sites-available/000-default.conf \
-        /etc/apache2/apache2.conf \
-    && sed -ri 's|AllowOverride None|AllowOverride All|g' \
-        /etc/apache2/apache2.conf
+RUN echo 'server {\n\
+    listen 80;\n\
+    root /var/www/html/public;\n\
+    index index.php;\n\
+    location / { try_files $uri $uri/ /index.php?$query_string; }\n\
+    location ~ \\.php$ {\n\
+        fastcgi_pass 127.0.0.1:9000;\n\
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;\n\
+        include fastcgi_params;\n\
+    }\n\
+}' > /etc/nginx/sites-available/default
 
 COPY . /var/www/html/
 
