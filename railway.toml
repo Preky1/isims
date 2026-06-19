@@ -1,6 +1,7 @@
 [build]
 builder = "dockerfile"
 dockerfilePath = "Dockerfile"
+dockerBuildTarget = ""
 
 [deploy]
 startCommand = "apache2-foreground"
