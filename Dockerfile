@@ -3,6 +3,10 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
+# Disable conflicting MPM modules and enable only mpm_prefork
+RUN a2dismod mpm_event mpm_worker mpm_itk 2>/dev/null || true && \
+    a2enmod mpm_prefork
+
 # Enable mod_rewrite
 RUN a2enmod rewrite
 
@@ -30,3 +34,4 @@ RUN mkdir -p /var/www/html/public/assets/uploads \
 EXPOSE 80
 
 ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
+
