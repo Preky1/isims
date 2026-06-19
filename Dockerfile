@@ -3,9 +3,17 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Enable mod_rewrite, disable conflicting MPMs
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
-    && a2enmod mpm_prefork rewrite
+# AGGRESSIVE FIX: Completely disable all MPM modules except prefork
+# The php:8.2-apache base image ships with mpm_event enabled by default
+# We need to ensure ONLY mpm_prefork is active
+RUN set -ex && \
+    # Remove all MPM module symlinks from mods-enabled
+    find /etc/apache2/mods-enabled -name 'mpm_*' -delete && \
+    # Explicitly enable only mpm_prefork
+    ln -s /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load && \
+    ln -s /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf && \
+    # Enable rewrite
+    a2enmod rewrite
 
 # Point document root at /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
@@ -31,3 +39,4 @@ RUN mkdir -p /var/www/html/public/assets/uploads \
 EXPOSE 80
 
 ENTRYPOINT ["/var/www/html/docker-entrypoint.sh"]
+
