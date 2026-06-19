@@ -1,0 +1,9 @@
+.env
+public/assets/uploads/*
+!public/assets/uploads/.gitkeep
+public/assets/img/logo.*
+public/assets/img/favicon.*
+public/assets/img/campus.*
+public/assets/img/hero_*
+public/assets/img/sections_*
+storage/logs/*.log
