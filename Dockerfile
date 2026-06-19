@@ -3,9 +3,14 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Enable mod_rewrite, disable conflicting MPMs
-RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
-    && a2enmod mpm_prefork rewrite
+# Fix MPM conflict — remove all mpm configs and force prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+           /etc/apache2/mods-enabled/mpm_event.load \
+           /etc/apache2/mods-enabled/mpm_worker.conf \
+           /etc/apache2/mods-enabled/mpm_worker.load \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
 
 # Point document root at /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
