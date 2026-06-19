@@ -1,36 +1,30 @@
-FROM php:8.2-apache
+FROM ubuntu:22.04
 
-# Install PDO MySQL
-RUN docker-php-ext-install pdo pdo_mysql
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Fix MPM conflict — remove all mpm configs and force prefork
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-           /etc/apache2/mods-enabled/mpm_event.load \
-           /etc/apache2/mods-enabled/mpm_worker.conf \
-           /etc/apache2/mods-enabled/mpm_worker.load \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && ln -sf /etc/apache2/mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/rewrite.load
+RUN apt-get update && apt-get install -y \
+    apache2 \
+    php8.1 \
+    php8.1-mysql \
+    php8.1-pdo \
+    libapache2-mod-php8.1 \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-# Point document root at /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
 
 RUN sed -ri 's|/var/www/html|${APACHE_DOCUMENT_ROOT}|g' \
         /etc/apache2/sites-available/000-default.conf \
-        /etc/apache2/apache2.conf \
     && sed -ri 's|AllowOverride None|AllowOverride All|g' \
         /etc/apache2/apache2.conf
 
-# Copy project
 COPY . /var/www/html/
 
-# Permissions
 RUN mkdir -p /var/www/html/public/assets/uploads \
              /var/www/html/public/assets/img \
              /var/www/html/storage/logs \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/public/assets/uploads \
-    && chmod -R 755 /var/www/html/public/assets/img \
     && chmod +x /var/www/html/docker-entrypoint.sh
 
 EXPOSE 80
