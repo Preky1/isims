@@ -3,8 +3,9 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Enable mod_rewrite
-RUN a2enmod rewrite
+# Enable mod_rewrite, disable conflicting MPMs
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork rewrite
 
 # Point document root at /var/www/html/public
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
