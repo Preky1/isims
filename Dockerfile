@@ -3,9 +3,12 @@ FROM php:8.2-apache
 # Install PDO MySQL
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Disable conflicting MPM modules and enable only mpm_prefork
-RUN a2dismod mpm_event mpm_worker mpm_itk 2>/dev/null || true && \
-    a2enmod mpm_prefork
+# Disable conflicting MPM modules by commenting them out in mods-enabled
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load && \
+    rm -f /etc/apache2/mods-enabled/mpm_*.conf
+
+# Enable only mpm_prefork
+RUN a2enmod mpm_prefork
 
 # Enable mod_rewrite
 RUN a2enmod rewrite
